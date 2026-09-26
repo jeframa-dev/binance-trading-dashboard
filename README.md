@@ -1,4 +1,6 @@
+
 # OKX Trading Dashboard
+![OKX Trading Dashboard](screenshot.png)   
 
 A custom crypto trading terminal built with Flask + CCXT + TradingView Lightweight Charts.
 
