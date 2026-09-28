@@ -200,6 +200,25 @@ function exportPnLCSV() {
         });
 }   
 
+function fetchMode() {
+    fetch('/api/mode')
+        .then(r => r.json())
+        .then(d => {
+            const badge = document.getElementById('mode-badge');
+            if (d.mode === 'DEMO') {
+                badge.textContent = 'DEMO';
+                badge.style.background = '#f0b90b';
+                badge.style.color = '#000';
+            } else {
+                badge.textContent = 'LIVE';
+                badge.style.background = '#e57373';
+                badge.style.color = '#fff';
+            }
+        });
+}   
+
+
+fetchMode();
 initEquityChart();
 fetchPnL();   
 fetchJournal();   

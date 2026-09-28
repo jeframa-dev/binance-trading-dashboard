@@ -7,15 +7,15 @@ load_dotenv()
 app = Flask(__name__)
 
 ex = ccxt.binance({
-    'apiKey': os.getenv('BINANCE_KEY'),
-    'secret': os.getenv('BINANCE_SECRET')
-})     
-
+    'apiKey': os.getenv('OKX_KEY'),
+    'secret': os.getenv('OKX_SECRET'),
+    })   
+ex.set_sandbox_mode(True)
 
 HTML = """<!DOCTYPE html>
 <html>
 <head>
-    <title>OKX Dashboard</title>
+    <title>Binance Dashboard</title>
     <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         body { font-family: monospace; background: #1a1a2e; color: #eee; padding: 20px; }
@@ -33,7 +33,8 @@ HTML = """<!DOCTYPE html>
     </style>
 </head>
 <body>
-    <h1>OKX Dashboard</h1>
+    <h1>Binance Dashboard</h1>
+    <span id="mode-badge" style="font-size:0.7em;padding:3px 8px;border-radius:4px;margin-left:10px;"></span>   
     <div class="controls">
         <select id="symbol">
             <option value="BTC/USDT">BTC/USDT</option>
@@ -181,7 +182,11 @@ def api_pnl():
         'closed_trades': closed_trades,
         'equity_curve': equity_curve,
         'open_position': open_position
-    })          
+    })  
+    
+@app.route('/api/mode')
+def api_mode():
+    return jsonify({'mode': 'DEMO' if ex.sandbox else 'LIVE'})           
 
 if __name__ == '__main__':
-    app.run(port=8501)   
+    app.run(port=8502)

@@ -1,6 +1,6 @@
 
-# OKX Trading Dashboard
-![OKX Trading Dashboard](screenshot.png)   
+# Binance Trading Dashboard
+![Binance Trading Dashboard](screenshot.png)   
 
 A custom crypto trading terminal built with Flask + CCXT + TradingView Lightweight Charts.
 
@@ -26,7 +26,7 @@ pip install -r requirements.txt
 
 cp .env.example .env
 
-5. Edit `.env` and replace the placeholders with your OKX API credentials.
+5. Edit `.env` and replace the placeholders with your Binance API credentials.
 6. Run:
 
 python3 app.py
@@ -44,8 +44,8 @@ python3 app.py
 | `requirements.txt` | Python dependencies |
 
 ## Notes
-- API key needs at minimum "Read" permission on OKX.
-- Trade permission requires $100+ account balance on OKX.
+- API key needs at minimum "Read" permission on Binance.
+- Trade permission requires $100+ account balance on Binance.
 - Default port is 8501. Change it in `app.py` if needed.
 
 Save (Ctrl+S).
