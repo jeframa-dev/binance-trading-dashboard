@@ -6,11 +6,10 @@ import os
 load_dotenv()
 app = Flask(__name__)
 
-ex = ccxt.okx({
-    'apiKey': os.getenv('OKX_KEY'),
-    'secret': os.getenv('OKX_SECRET'),
-    'password': os.getenv('OKX_PASS')
-})   
+ex = ccxt.binance({
+    'apiKey': os.getenv('BINANCE_KEY'),
+    'secret': os.getenv('BINANCE_SECRET')
+})     
 
 
 HTML = """<!DOCTYPE html>
