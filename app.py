@@ -62,11 +62,13 @@ HTML = """<!DOCTYPE html>
     <h3>Journal</h3>
 <div id="journal-balance"></div>
 <table id="journal-trades"></table>
+<button onclick="exportJournalCSV()" style="padding:6px 12px;background:#16213e;color:#eee;border:1px solid #4fc3f7;cursor:pointer;margin:10px 0;">⬇ Export CSV</button>   
 <div id="journal-orders"></div>   
 <h3>P&L</h3>
 <div id="pnl-stats"></div>
 <div id="equity-chart" style="height:250px;margin:15px 0;"></div>
-<table id="pnl-trades"></table>   
+<table id="pnl-trades"></table> 
+<button onclick="exportPnLCSV()" style="padding:6px 12px;background:#16213e;color:#eee;border:1px solid #4fc3f7;cursor:pointer;margin:10px 0;">⬇ Export P&L CSV</button>     
     <p id="status"></p>
     <script src="/js.js"></script>
 </body>

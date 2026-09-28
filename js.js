@@ -163,6 +163,43 @@ function fetchPnL() {
         });
 }
 
+function exportJournalCSV() {
+    fetch('/api/journal')
+        .then(r => r.json())
+        .then(d => {
+            let csv = 'Time,Side,Amount,Price,Cost,Fee\n';
+            d.trades.forEach(t => {
+                const time = new Date(t.time).toLocaleString();
+                csv += time + ',' + t.side + ',' + t.amount + ',' + t.price + ',' + t.cost + ',' + t.fee + '\n';
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'okx-journal-' + new Date().toISOString().slice(0,10) + '.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+}   
+
+function exportPnLCSV() {
+    fetch('/api/pnl')
+        .then(r => r.json())
+        .then(d => {
+            let csv = '#,Entry Price,Exit Price,Amount,P&L,Cumulative,Result,Entry Time,Exit Time\n';
+            d.closed_trades.forEach((t, i) => {
+                csv += (i+1) + ',' + t.entry_price + ',' + t.exit_price + ',' + t.amount + ',' + t.pnl + ',' + t.equity + ',' + (t.win ? 'WIN' : 'LOSS') + ',' + new Date(t.entry_time).toLocaleString() + ',' + new Date(t.exit_time).toLocaleString() + '\n';
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'okx-pnl-' + new Date().toISOString().slice(0,10) + '.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+}   
+
 initEquityChart();
 fetchPnL();   
 fetchJournal();   
