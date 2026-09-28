@@ -4,11 +4,18 @@ let useCandle = true;
 function initChart() {   
     const c = document.getElementById('chart');
     chart = LightweightCharts.createChart(c, {
-        height: 400,
-        layout: { background: { color: '#1a1a2e' }, textColor: '#eee' },
-        grid: { vertLines: { color: '#2a2a4e' }, horzLines: { color: '#2a2a4e' } }
-    });
-
+    autoSize: true,
+    layout: {
+        background: { color: '#1a1a2e' },
+        textColor: '#eee',
+        fontSize: 11,
+        fontFamily: 'monospace'
+    },
+    timeScale: {
+        minimumHeight: 40,
+    },
+    grid: { vertLines: { color: '#2a2a4e' }, horzLines: { color: '#2a2a4e' } }
+});
     createPriceSeries();
 }
 
@@ -71,7 +78,41 @@ function fetchData() {
 document.getElementById('symbol').addEventListener('change', () => { fetchCandles(); fetchData(); });
 document.getElementById('timeframe').addEventListener('change', () => { fetchCandles(); fetchData(); });
 
+function fetchJournal() {
+    fetch('/api/journal')
+        .then(r => r.json())
+        .then(d => {
+            document.getElementById('journal-balance').innerHTML =
+                '<p style="font-size:1.1em;margin:10px 0;">' +
+                'USDT: ' + d.balance.usdt_free + ' free / ' + d.balance.usdt_total + ' total' +
+                ' &nbsp;|&nbsp; ' +
+                'BTC: ' + d.balance.btc_free + ' free / ' + d.balance.btc_total + ' total' +
+                '</p>';
+
+            let t = '<tr><th>Time</th><th>Side</th><th>Amount</th><th>Price</th><th>Cost</th><th>Fee</th></tr>';
+            d.trades.forEach(tr => {
+                const cls = tr.side === 'buy' ? 'buy' : 'sell';
+                const time = new Date(tr.time).toLocaleString();
+                t += '<tr><td>' + time + '</td><td class="' + cls + '">' + tr.side + '</td><td>' + tr.amount + '</td><td>' + tr.price + '</td><td>' + tr.cost.toFixed(2) + '</td><td>' + tr.fee + '</td></tr>';
+            });
+            document.getElementById('journal-trades').innerHTML = t;
+
+            let o = '';
+            if (d.open_orders.length > 0) {
+                o = '<p style="color:#f0b90b;margin:10px 0;">Open Orders:</p>';
+                d.open_orders.forEach(ord => {
+                    o += '<p>' + ord.side + ' ' + ord.amount + ' @ ' + ord.price + ' (' + ord.type + ')</p>';
+                });
+            } else {
+                o = '<p style="color:#666;">No open orders.</p>';
+            }
+            document.getElementById('journal-orders').innerHTML = o;
+        });
+}
+
+fetchJournal();   
+
 initChart();
 fetchCandles();
 fetchData();
-setInterval(() => { fetchData(); fetchCandles(); }, 3000);   
+setInterval(() => { fetchData(); fetchCandles(); fetchJournal(); }, 3000);   

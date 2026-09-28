@@ -59,6 +59,10 @@ HTML = """<!DOCTYPE html>
     <table id="book"></table>
     <h3>Recent Trades</h3>
     <table id="trades"></table>
+    <h3>Journal</h3>
+<div id="journal-balance"></div>
+<table id="journal-trades"></table>
+<div id="journal-orders"></div>   
     <p id="status"></p>
     <script src="/js.js"></script>
 </body>
@@ -94,6 +98,28 @@ def api_candles():
         {'time': int(t[0] / 1000), 'open': t[1], 'high': t[2], 'low': t[3], 'close': t[4], 'volume': t[5]}
         for t in ohlcv
     ])
+    
+@app.route('/api/journal')
+def api_journal():
+    balance = ex.fetch_balance()
+    trades = ex.fetch_my_trades('BTC/USDT', limit=20)
+    open_orders = ex.fetch_open_orders('BTC/USDT')
+    return jsonify({
+        'balance': {
+            'usdt_free': balance.get('USDT', {}).get('free', 0),
+            'usdt_total': balance.get('USDT', {}).get('total', 0),
+            'btc_free': balance.get('BTC', {}).get('free', 0),
+            'btc_total': balance.get('BTC', {}).get('total', 0),
+        },
+        'trades': [
+            {'side': t['side'], 'amount': t['amount'], 'price': t['price'], 'cost': t.get('cost', 0), 'fee': t.get('fee', {}).get('cost', 0) if t.get('fee') else 0, 'time': t['timestamp']}
+            for t in trades
+        ],
+        'open_orders': [
+            {'side': o['side'], 'amount': o['amount'], 'price': o['price'], 'type': o['type']}
+            for o in open_orders
+        ]
+    })       
 
 if __name__ == '__main__':
     app.run(port=8501)   
