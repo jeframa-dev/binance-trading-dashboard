@@ -7,10 +7,10 @@ load_dotenv()
 app = Flask(__name__)
 
 ex = ccxt.binance({
-    'apiKey': os.getenv('OKX_KEY'),
-    'secret': os.getenv('OKX_SECRET'),
+    'apiKey': os.getenv('BINANCE_KEY'),
+    'secret': os.getenv('BINANCE_SECRET'),
     })   
-ex.set_sandbox_mode(True)
+
 
 HTML = """<!DOCTYPE html>
 <html>
@@ -107,15 +107,18 @@ def api_candles():
     
 @app.route('/api/journal')
 def api_journal():
-    balance = ex.fetch_balance()
-    trades = ex.fetch_my_trades('BTC/USDT', limit=20)
-    open_orders = ex.fetch_open_orders('BTC/USDT')
+    try:
+        balance = ex.fetch_balance()
+        trades = ex.fetch_my_trades('BTC/USDT', limit=20)
+        open_orders = ex.fetch_open_orders('BTC/USDT')
+    except Exception as e:
+        return jsonify({'error': str(e)}), 503
     return jsonify({
         'balance': {
-            'usdt_free': balance.get('USDT', {}).get('free', 0),
-            'usdt_total': balance.get('USDT', {}).get('total', 0),
-            'btc_free': balance.get('BTC', {}).get('free', 0),
-            'btc_total': balance.get('BTC', {}).get('total', 0),
+            'usdt_free': balance.get('free', {}).get('USDT', 0),
+            'usdt_total': balance.get('total', {}).get('USDT', 0),
+            'btc_free': balance.get('free', {}).get('BTC', 0),
+            'btc_total': balance.get('total', {}).get('BTC', 0),
         },
         'trades': [
             {'side': t['side'], 'amount': t['amount'], 'price': t['price'], 'cost': t.get('cost', 0), 'fee': t.get('fee', {}).get('cost', 0) if t.get('fee') else 0, 'time': t['timestamp']}
@@ -125,7 +128,7 @@ def api_journal():
             {'side': o['side'], 'amount': o['amount'], 'price': o['price'], 'type': o['type']}
             for o in open_orders
         ]
-    })
+    })   
     
 @app.route('/api/pnl')
 def api_pnl():
