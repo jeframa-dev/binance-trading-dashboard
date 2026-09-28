@@ -63,6 +63,10 @@ HTML = """<!DOCTYPE html>
 <div id="journal-balance"></div>
 <table id="journal-trades"></table>
 <div id="journal-orders"></div>   
+<h3>P&L</h3>
+<div id="pnl-stats"></div>
+<div id="equity-chart" style="height:250px;margin:15px 0;"></div>
+<table id="pnl-trades"></table>   
     <p id="status"></p>
     <script src="/js.js"></script>
 </body>
@@ -119,7 +123,64 @@ def api_journal():
             {'side': o['side'], 'amount': o['amount'], 'price': o['price'], 'type': o['type']}
             for o in open_orders
         ]
-    })       
+    })
+    
+@app.route('/api/pnl')
+def api_pnl():
+    trades = ex.fetch_my_trades('BTC/USDT', limit=100)   
+    trades.sort(key=lambda t: t['timestamp'])
+
+    # Pair entries (buy) with exits (sell) for spot long
+    open_position = None
+    closed_trades = []
+    equity = 0  # cumulative P&L in USDT
+
+    for t in trades:
+        if t['side'] == 'buy' and open_position is None:
+            open_position = {'entry_price': t['price'], 'amount': t['amount'], 'entry_time': t['timestamp'], 'fee': t.get('cost', 0) * 0.001}
+        elif t['side'] == 'sell' and open_position is not None:
+            amount = min(t['amount'], open_position['amount'])
+            pnl = (t['price'] - open_position['entry_price']) * amount - (open_position['fee'] + t['cost'] * 0.001)
+            equity += pnl
+            closed_trades.append({
+                'entry_price': open_position['entry_price'],
+                'exit_price': t['price'],
+                'amount': amount,
+                'pnl': round(pnl, 4),
+                'entry_time': open_position['entry_time'],
+                'exit_time': t['timestamp'],
+                'equity': round(equity, 4),
+                'win': pnl > 0
+            })
+            if t['amount'] > open_position['amount']:
+                open_position = {'entry_price': t['price'], 'amount': t['amount'] - 			open_position['amount'], 'entry_time': t['timestamp'], 'fee': 0}
+            else:
+                open_position = None
+
+    # Stats
+    wins = [t for t in closed_trades if t['win']]
+    losses = [t for t in closed_trades if not t['win']]
+    stats = {
+        'total_trades': len(closed_trades),
+        'wins': len(wins),
+        'losses': len(losses),
+        'win_rate': round(len(wins) / len(closed_trades) * 100, 1) if closed_trades else 0,
+        'total_pnl': round(equity, 4),
+        'avg_win': round(sum(t['pnl'] for t in wins) / len(wins), 4) if wins else 0,
+        'avg_loss': round(sum(t['pnl'] for t in losses) / len(losses), 4) if losses else 0,
+        'max_drawdown': round(min((t['equity'] for t in closed_trades), default=0), 4) if closed_trades else 0,
+        'profit_factor': round(sum(t['pnl'] for t in wins) / abs(sum(t['pnl'] for t in losses)), 2) if losses and sum(t['pnl'] for t in losses) != 0 else 0
+    }
+
+    # Equity curve data
+    equity_curve = [{'time': int(t['exit_time'] / 1000), 'value': t['equity']} for t in closed_trades]
+
+    return jsonify({
+        'stats': stats,
+        'closed_trades': closed_trades,
+        'equity_curve': equity_curve,
+        'open_position': open_position
+    })          
 
 if __name__ == '__main__':
     app.run(port=8501)   

@@ -110,9 +110,63 @@ function fetchJournal() {
         });
 }
 
-fetchJournal();   
+let equityChart, equitySeries;
 
+function initEquityChart() {
+    const c = document.getElementById('equity-chart');
+    equityChart = LightweightCharts.createChart(c, {
+        height: 250,
+        layout: { background: { color: '#1a1a2e' }, textColor: '#eee' },
+        grid: { vertLines: { color: '#2a2a4e' }, horzLines: { color: '#2a2a4e' } }
+    });
+    equitySeries = equityChart.addLineSeries({ color: '#81c784', lineWidth: 2 });
+}
+
+function fetchPnL() {
+    fetch('/api/pnl')
+        .then(r => r.json())
+        .then(d => {
+            // Stats
+            const s = d.stats;
+            document.getElementById('pnl-stats').innerHTML =
+                '<div style="display:flex;gap:20px;flex-wrap:wrap;margin:10px 0;">' +
+                '<span>Total Trades: <b>' + s.total_trades + '</b></span>' +
+                '<span>Win Rate: <b style="color:' + (s.win_rate >= 50 ? '#81c784' : '#e57373') + '">' + s.win_rate + '%</b></span>' +
+                '<span>W/L: <b>' + s.wins + '/' + s.losses + '</b></span>' +
+                '<span>Total P&L: <b style="color:' + (s.total_pnl >= 0 ? '#81c784' : '#e57373') + '">$' + s.total_pnl + '</b></span>' +
+                '<span>Avg Win: <b style="color:#81c784">$' + s.avg_win + '</b></span>' +
+                '<span>Avg Loss: <b style="color:#e57373">$' + s.avg_loss + '</b></span>' +
+                '<span>Profit Factor: <b>' + s.profit_factor + '</b></span>' +
+                '</div>';
+
+            // Equity curve
+            if (d.equity_curve.length > 0) {
+                equitySeries.setData(d.equity_curve);
+                equityChart.timeScale().fitContent();
+            }
+
+            // Closed trades table
+            let t = '<tr><th>#</th><th>Entry</th><th>Exit</th><th>Amount</th><th>P&L</th><th>Cumulative</th><th>Result</th></tr>';
+            d.closed_trades.forEach((tr, i) => {
+                const cls = tr.win ? 'buy' : 'sell';
+                t += '<tr>' +
+                    '<td>' + (i + 1) + '</td>' +
+                    '<td>' + tr.entry_price + '</td>' +
+                    '<td>' + tr.exit_price + '</td>' +
+                    '<td>' + tr.amount + '</td>' +
+                    '<td class="' + cls + '">$' + tr.pnl + '</td>' +
+                    '<td>$' + tr.equity + '</td>' +
+                    '<td class="' + cls + '">' + (tr.win ? 'WIN' : 'LOSS') + '</td>' +
+                    '</tr>';
+            });
+            document.getElementById('pnl-trades').innerHTML = t;
+        });
+}
+
+initEquityChart();
+fetchPnL();   
+fetchJournal();   
 initChart();
 fetchCandles();
 fetchData();
-setInterval(() => { fetchData(); fetchCandles(); fetchJournal(); }, 3000);   
+setInterval(() => { fetchData(); fetchCandles(); fetchJournal(); fetchPnL(); }, 5000);   
